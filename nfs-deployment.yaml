@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-client-provisioner
+  namespace: default
+spec:
+  replicas: 1               #副本数量为1
+  selector:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nfs-client-provisioner
+    spec:
+      serviceAccount: nfs-provisioner       #指定账户
+      containers:
+        - name: nfs-client-provisioner
+          image: registry.cn-hangzhou.aliyuncs.com/open-ali/nfs-client-provisioner   #使用的是这个镜像
+          volumeMounts:
+            - name: nfs-client-root
+              mountPath:  /persistentvolumes      #指定容器内的挂载目录
+          env:
+            - name: PROVISIONER_NAME        #这是这个容器内置的变量
+              value: ljz-test         #这是上面变量的值（名字）
+            - name: NFS_SERVER       #内置变量，用于指定nfs服务的IP
+              value: 192.168.122.10           
+            - name: NFS_PATH              #内置变量，指定的是nfs共享的目录
+              value: /nfs
+      volumes:              #这下面是指定上面挂载到容器内的nfs的路径及IP
+        - name: nfs-client-root
+          nfs:
+            server: 192.168.122.10
+            path: /nfs
